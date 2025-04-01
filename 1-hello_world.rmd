@@ -1,3 +1,9 @@
+---
+title: "Hello World!"
+author: Harald Puhr
+date: "April 1, 2025"
+---
+
 # 1. Hello World!
 
 This code snippet demonstrates a simple "Hello World!" program in R.
