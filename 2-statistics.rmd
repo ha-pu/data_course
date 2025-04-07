@@ -34,6 +34,11 @@ summarise(
     arrange(UNS)
 ```
 
+## Questions
+
++ Are there immediate takeaways for our efforts to increase skills (UNS)?
++ Is there one effort-related variables that stands out?
+
 # Distribution of study effort
 
 ```{r}
@@ -44,10 +49,16 @@ df %>%
         values_to = "value"
     ) %>%
     ggplot() +
-    geom_histogram(aes(value)) +
+    geom_histogram(aes(value), bins = 25) +
     facet_wrap(~knowledge) +
     theme_bw()
 ```
+
+## Questions
+
++ What do you see in the distribution of study effort variables?
++ How do the distributions differentiate?
++ Are there immediate takeaways for our efforts to increase skills (UNS)?
 
 # Boxplot of study effort by skill level
 
@@ -63,6 +74,11 @@ df %>%
     facet_wrap(~knowledge) +
     theme_bw()
 ```
+
+## Questions
+
++ Do the boxplots tell us anything about the relevance of the study effort variables?
++ Are there immediate takeaways for our efforts to increase skills (UNS)?
 
 # Correlation between study effort variables
 
@@ -83,8 +99,18 @@ df %>%
         values_to = "Correlation"
     ) %>%
     ggplot() +
-    geom_tile(aes(x = Var1, y = Var2, fill = Correlation))
+    geom_tile(aes(x = Var1, y = Var2, fill = Correlation)) +
+    labs(
+        x = NULL,
+        y = NULL
+    ) +
+    theme_bw()
 ```
+
+## Questions
+
++ Are there any interesting correlations between study effort variables?
++ Are there immediate takeaways for our efforts to increase skills (UNS)?
 
 # Test the statistical signficance of differences between skill levels
 
@@ -108,3 +134,10 @@ t.test(STG ~ top, data = df)
 out <- aov(STG ~ UNS, data = df)
 summary(out)
 ```
+
+## Questions
+
++ How are these results different from the previous ones?
++ What do you think about the results of the t-test and ANOVA?
++ Are there immediate takeaways for our efforts to increase skills (UNS)?
++ What analyses should we do next?
