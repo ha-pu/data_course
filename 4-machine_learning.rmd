@@ -1,355 +1,298 @@
+---
+title: "Machine Learning"
+author: Harald Puhr
+date: "April 8, 2025"
+---
 
-First we need to load the caret library
-(and the tidyverse package which I use for data manipulation)
+[Data Source](https://github.com/ha-pu/data_files#online-news-popularity-dataset)
+
+# Load packages and data
 
 ```{r}
-#install.packages("caret")
 library(caret)
-
-#install.packages("tidyverse")
+library(caretEnsemble)
 library(tidyverse)
+```
 
+Setting a seed is important for reproducibility. It ensures that the random
+processes in your code yield the same results each time you run it. This is
+particularly crucial in machine learning, where randomness can significantly
+affect model training and evaluation.
+
+```{r}
 set.seed(123)
 ```
 
-To build an ML algorithm we need some data
-
 ```{r}
-
-### Lets load some data
-
-titanicDF <- read.csv("titanic.csv")
-
-head(titanicDF)
-
+df <- read_csv("https://raw.githubusercontent.com/ha-pu/data_files/refs/heads/main/3-online_news_popularity.csv") %>%
+  slice_sample(n = 1000)
 ```
 
-
-##### Preparing our data
+# Preparing our data
 
 ```{r}
-DF <- titanicDF
+glimpse(df)
+```
 
-### Make sure that all variables have the correct type
+## Drop columns which do not contain relevant information
 
-DF <- DF %>% 
-  mutate(Survived = factor(Survived, labels =c("Zero", "One")),
-         Sex = factor(Sex),
-         Pclass = factor(Pclass))
+```{r}
+df <- select(df, -url, -shares)
+```
 
+## Designate he column names of our outcome and predictor variables
 
-### Drop Columns which do not contain relevant information 
+```{r} 
+label <- "high_share"
+predictors <- names(df)[!(names(df) %in% label)]
+```
 
-DF <- DF %>% select(-Name)
+# Splitting the data into training and test sets
 
+```{r}
+train_idx <- sample(seq(nrow(df)), size = nrow(df) * 0.8)
+train_df <- slice(df, train_idx)
+test_df <- slice(df, -train_idx)
+```
 
+# Pre-processing the data
 
-### Transform categorical predictors into dummy variables
+## Change data type of the label variable
 
-dummyModel <- dummyVars(Survived ~ ., DF, fullRank = TRUE)
+```{r}
+y_train <- train_df[,label][[1]]
+y_train <- as.integer(y_train)
+y_test <- test_df[,label][[1]]
+y_test <- as.integer(y_test)
+head(y_train)
+```
 
-DF <- DF %>% select(Survived) %>%
-  bind_cols(data.frame(predict(dummyModel, newdata = DF)))
+## Avoid multicollinearity
 
-
-### Designate he column names of our outcome variable (label) and the predictor variables 
-label <- "Survived"
-
-predictors <- names(DF)[! names(DF) %in% c("Survived")]
-
-glimpse(DF)
-
+```{r}
+findCorrelation(cor(train_df[,predictors]))
 ```
 
 ```{r}
-### To be able to tell how well our model performs, we need to split our data into a train and a test set
-
-train_index <- createDataPartition(DF[,label], p = 0.8, list = FALSE)
-
-trainDF <- DF[train_index,]
-
-testDF <- DF[-train_index,]
-
-
+predictors <- predictors[-c(5, 6, 20)]
 ```
 
-
-
-
+## Check for linear combinations
 
 ```{r}
-### We need to pre-process our data to prepare it for machine learning algorithms
-
-findCorrelation(cor(trainDF[,predictors]))
-
-findLinearCombos(trainDF[,predictors])
-
-summary(trainDF)
-
-
-### Still we should expect missing values and think about how to handle them.
-### Here we decide to scale and center our data points and use medianImpute should any values be missing.
-
-preprocPar <- preProcess(trainDF[,predictors], method=c("center", "scale", "medianImpute"))
-
-### We could also be more aggressive in removing features
-
-preprocParV1 <- preProcess(trainDF[,predictors], method = c("center", "scale", "medianImpute", "corr", "nzv"))
-
-glimpse(predict(preprocPar, trainDF))
-
-glimpse(predict(preprocParV1, trainDF))
-
-
+findLinearCombos(train_df[,predictors])
 ```
 
+```{r}
+predictors <- predictors[-35]
+```
 
-#### Training, Validation, & Testing
+## Check for missing values
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r}	
+summary(train_df)
+```
 
-### With caret we can train many algorithms easily
+## Scale and center the data
 
+```{r}
+preproc_par <- preProcess(train_df[,predictors], method=c("center", "scale"))
+train_df[,predictors] <- predict(preproc_par, train_df[,predictors])
+```
+
+# Model training, validation, and testing
+
+## Training
+
+```{r}
 quickTrain <- trainControl(method = "cv", number = 5)
 
-model_rf <- train(x= trainDF[,predictors], y= trainDF[,label], method = "rf", trControl = quickTrain)
+model_rf <- train(x = train_df[,predictors], y = y_train, method = "rf", trControl = quickTrain)
 
-model_glmnet <- train(x= trainDF[,predictors], y= trainDF[,label], method = "glmnet", trControl = quickTrain)
+model_glmnet <- train(x = train_df[,predictors], y = y_train, method = "glmnet", trControl = quickTrain)
 
-model_nnet <- train(x= trainDF[,predictors], y= trainDF[,label], method = "nnet", trControl = quickTrain)
+model_nnet <- train(x = train_df[,predictors], y = y_train, method = "nnet", trControl = quickTrain)
 
-model_xgbTree <- train(x= trainDF[,predictors], y= trainDF[,label], method = "xgbTree", trControl = quickTrain)
+model_xgbTree <- train(x = train_df[,predictors], y = y_train, method = "xgbTree", trControl = quickTrain)
 
-model_xgbLinear <- train(x= trainDF[,predictors], y= trainDF[,label], method = "xgbLinear", trControl = quickTrain)
-
+model_xgbLinear <- train(x = train_df[,predictors], y = y_train, method = "xgbLinear", trControl = quickTrain)
 ```
 
+## Validation
+
 ```{r}
-
-### Lets compare the performance of the algorithms
-
-comparison_alg <- data.frame(
+comparison_alg <- tibble(
   Model = c("rf","glmnet","nnet","xgbTree","xgbLinear"),
-  Accuracy_base = c(max(model_rf$results$Accuracy), max(model_glmnet$results$Accuracy),
-               max(model_nnet$results$Accuracy),
-               max(model_xgbTree$results$Accuracy), max(model_xgbLinear$results$Accuracy))
+  Accuracy_base = c(
+    max(model_rf$results$Accuracy), max(model_glmnet$results$Accuracy),
+    max(model_nnet$results$Accuracy), max(model_xgbTree$results$Accuracy),
+    max(model_xgbLinear$results$Accuracy))
 )
-
 comparison_alg
-
 ```
 
+### Additional validation methods
 
 ```{r}
-
-### Let's test a few validation methods:
-
-
-# Let's first define a cross validation training method
+# Cross validation training method
 crossValidation <- trainControl(method = "CV")
 
+# Boot strapping training method
+bootstraping <- trainControl(method = "boot")
 
-# Let's now define a boot strapping training method
-bootstraping <- trainControl(method="boot")
+# Apply both methods to a random forest model
+model_cv <- train(x= train_df[,predictors], y= train_df[,label], method = "rf", trControl = crossValidation)
+model_boot <- train(x= train_df[,predictors], y= train_df[,label], method = "rf", trControl = bootstraping)
+```
 
-
-
-
-# Let's test both methods with a random forest model
-
-model_cv <- train(x= trainDF[,predictors], y= trainDF[,label], method = "rf",
-      trControl = crossValidation)
-
-model_boot <- train(x= trainDF[,predictors], y= trainDF[,label], method = "rf",
-      trControl = bootstraping)
-
-
-# Here is how those methods compare
-
-comparison_val <- data.frame(
+```{r}
+comparison_val <- tibble(
   Model = c("cv","boot"),
-  Accuracy_base = c(max(model_cv$results$Accuracy),
-               max(model_boot$results$Accuracy))
+  Accuracy_base = c(
+    max(model_cv$results$Accuracy), max(model_boot$results$Accuracy)
+  )
 )
-
-
 comparison_val
 ```
 
+### Model tuning
 
 ```{r}
+# Grid tuning
+gridTune <- trainControl(method = "CV", search  = "grid")
 
-### Let's test a few tuning methods:
+# Random search tuning method:
+randomTune <- trainControl(method = "CV", search  = "random")
 
+# Adaptive search tuning method:
+adaptiveTune <- trainControl(
+  method ="adaptive_cv",
+  adaptive =list(min=2, alpha =0.05,method ="gls", complete =TRUE),
+  search ="random"
+  )
 
-# First we define a grid tuning method:
-gridTune <- trainControl(method = "CV", search  ="grid")
+# Apply all three methods to a glmnet model
+model_grid <- train(
+  x= train_df[,predictors], y= train_df[,label], method = "glmnet",
+  trControl = gridTune, tuneLength = 5
+  )
+model_random <- train(
+  x= train_df[,predictors], y= train_df[,label], method = "glmnet",
+  trControl = randomTune, tuneLength = 25
+  )
+model_adaptive  <- train(
+  x= train_df[,predictors], y= train_df[,label], method = "glmnet",
+  trControl = adaptiveTune, tuneLength = 25
+  )
 
-
-# Second we define a random search tuning method:
-randomTune <- trainControl(method = "CV", search  ="random")
-
-# Third we define an adaptive search tuning method:
-adaptiveTune <- trainControl(method ="adaptive_cv",
-             adaptive =list(min=2, alpha =0.05,method ="gls", complete =TRUE),
-             search ="random")
-
-
-# Let's test all there methods with a glmnet model
-
-model_grid <- train(x= trainDF[,predictors], y= trainDF[,label], method = "glmnet",
-      trControl = gridTune,
-      tuneLength = 5)
-
-model_random <- train(x= trainDF[,predictors], y= trainDF[,label], method = "glmnet",
-      trControl = randomTune,
-      tuneLength = 25)
-
-
-model_adaptive  <- train(x= trainDF[,predictors], y= trainDF[,label], method = "glmnet",
-      trControl = adaptiveTune,
-      tuneLength = 25)
-
-
-# Here is how those methods compare
-comparison_tune <- data.frame(
+comparison_tune <- tibble(
   Model = c("grid","random","adaptive"),
-  Accuracy_base = c(max(model_grid$results$Accuracy), max(model_random$results$Accuracy),
-               max(model_adaptive$results$Accuracy))
+  Accuracy_base = c(
+    max(model_grid$results$Accuracy), max(model_random$results$Accuracy),
+    max(model_adaptive$results$Accuracy)
+  )
 )
-
 comparison_tune
 ```
 
+## Testing
+
 ```{r}
-
-# Now lets test which of our models has the best OOS performance on our test data
-
 comparison_all <- bind_rows(comparison_alg, comparison_val, comparison_tune)
 
 det_OOS_accuracy <- function(model){
-  confusionMatrix(predict(model,testDF),testDF$Survived)$overall[[1]]
+  confusionMatrix(predict(model,test_df), y_test)$overall[[1]]
 }
 
+all_model_list <- list(
+  model_rf, model_glmnet, model_nnet, model_xgbTree,
+  model_xgbLinear, model_cv, model_boot, model_grid,
+  model_random, model_adaptive
+)
 
-all_model_list <- list(model_rf, model_glmnet, model_nnet, model_xgbTree,
-                       model_xgbLinear, model_cv, model_boot, model_grid,
-                       model_random, model_adaptive)
+comparison_all <- mutate(
+  comparison_all,
+  OOS_Acc = map_dbl(all_model_list, det_OOS_accuracy)
+)
 
-comparison_all <- comparison_all %>% mutate( OOS_Acc = sapply(all_model_list, det_OOS_accuracy) )
-
-comparison_all %>% arrange(desc(OOS_Acc))
-
-
-
+arrange(comparison_all, desc(OOS_Acc))
 ```
+
+### Variable importance
 
 ```{r}
-
-### Let's see how important the individual variables are
-
 varImp(model_xgbTree)
-
-
 plot(varImp(model_xgbTree), main = "xgbTree")
-
 plot(varImp(model_nnet), main = "nnet")
-
 plot(varImp(model_glmnet), main = "glmnet")
-
 ```
 
+# Ensemble learning
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
-### Let's simplify calculating many models 
-
-library(caretEnsemble)
-
+```{r}
 algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear","svmLinear2")
 
+stack_index = createFolds(y_train, k = 5) # We want to fix our index for comparison and validity
 
-stack_index = createFolds(trainDF$Survived, k = 5) # We want to fix our index for comparison and validity
-
-listControl <- trainControl(method = "cv", number = 5, 
-                            classProbs = TRUE, # We need to predict probabilities not 0 or 1 (more info)
-                            savePredictions = TRUE, # necessary for stack model later
-                            index = stack_index
-                            )
-
+listControl <- trainControl(
+  method = "cv", number = 5, 
+  classProbs = TRUE, # We need to predict probabilities not 0 or 1 (more info)
+  savePredictions = TRUE, # necessary for stack model later
+  index = stack_index
+)
 
 
-models <- caretList(x= trainDF[,predictors], y= trainDF[,label],
-                    trControl = listControl,
-                    methodList = algoList)
 
+models <- caretList(
+  x = train_df[,predictors], y = y_train, trControl = listControl,
+  methodList = algoList
+)
 ```
 
-
+## Compare the models
 
 ```{r}
-
-### Let's see the results
-
-
 results <- resamples(models)
 summary(results)
-
-
 modelCor(resamples(models))
-
-
 ```
 
+## Automatic model selection
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-### But we do not have to chose between the models best on their average performance
-### We can use an ML algorithm to pick the best algo. for the situation
-
-stackControl <- trainControl(method="repeatedcv", number = 10, repeats = 3, classProbs = TRUE,
-                             index = stack_index
-                             )
- 
+stackControl <- trainControl(
+  method = "repeatedcv", number = 10, repeats = 3, classProbs = TRUE,
+  index = stack_index
+  )
 
 stack_tree <- caretStack(models, method = "xgbTree", trControl = stackControl)
 
 stack_gbm <- caretStack(models, method = "gbm", trControl = stackControl)
 
 stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
-
 ```
 
+## Compare the models
 
 ```{r}
+ensemble_tree <- predict(stack_tree, test_df, type = "prob")
+ensemble_glm <- predict(stack_glm, test_df, type = "prob")
+ensemble_gbm <- predict(stack_gbm, test_df, type = "prob")
 
-### Let's co,pare the results
-
-ensemble_tree <- predict(stack_tree, testDF, type = "prob")
-ensemble_glm <- predict(stack_glm, testDF, type = "prob")
-ensemble_gbm <- predict(stack_gbm, testDF, type = "prob")
-
-Results <- as.data.frame(predict(models,testDF,type)) %>% 
+Results <- as.data.frame(predict(models, test_df, type)) %>% 
   cbind(ensemble_tree, ensemble_glm, ensemble_gbm)
-
 
 det_OOS_accuracy_probs <- function(model){
   preds <- factor(model<0.5, labels =c("Zero", "One"))
   confusionMatrix(preds,testDF$Survived)$overall[[1]]
 }
 
-
-
-OOS_ACC <- apply(Results, MARGIN =2, FUN = det_OOS_accuracy_probs)
+OOS_ACC <- apply(Results, MARGIN = 2, FUN = det_OOS_accuracy_probs)
 
 OOS_ACC
 
-barplot(OOS_ACC, ylim= c(min(OOS_ACC)*0.9,max(OOS_ACC)*1.1), xpd = FALSE, las = 2, space = 1)
-
-
-
-
-
-
+barplot(
+  OOS_ACC, ylim = c(min(OOS_ACC) * 0.9, max(OOS_ACC) * 1.1),
+  xpd = FALSE, las = 2, space = 1
+)
 ```
-
-
-
