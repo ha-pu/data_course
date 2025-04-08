@@ -5,3 +5,5 @@ dependencies:
   - r-tidyverse
   - r-sjplot
   - r-caret
+  - r-caretensemble
+  - r-xgboost
