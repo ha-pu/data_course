@@ -4,7 +4,7 @@ author: Harald Puhr
 date: "April 8, 2025"
 ---
 
-[Data Source](https://github.com/ha-pu/data_files#online-news-popularity-dataset)
+[Data Source](https://github.com/ha-pu/data_files#repurchase-likelihood-dataset)
 
 # Load packages and data
 
@@ -24,8 +24,7 @@ set.seed(123)
 ```
 
 ```{r}
-df <- read_csv("https://raw.githubusercontent.com/ha-pu/data_files/refs/heads/main/3-online_news_popularity.csv") %>%
-  slice_sample(n = 1000)
+df <- read_csv("https://raw.githubusercontent.com/ha-pu/data_files/refs/heads/main/4-repurchase_likelihood.csv")
 ```
 
 # Preparing our data
@@ -34,16 +33,37 @@ df <- read_csv("https://raw.githubusercontent.com/ha-pu/data_files/refs/heads/ma
 glimpse(df)
 ```
 
+## Recode variables
+
+```{r}
+df <- df %>% 
+  mutate(
+    repurchase = factor(repurchase),
+    customer_sex = factor(customer_sex),
+    customer_tier = factor(customer_tier)
+  )
+```
+
 ## Drop columns which do not contain relevant information
 
 ```{r}
-df <- select(df, -url, -shares)
+df <- select(df, -customer_id, -customer_name)
+```
+
+## Transform categorical predictors into dummy variables
+
+```{r}
+dummyModel <- dummyVars(repurchase ~ ., df, fullRank = TRUE)
+
+df <- predict(dummyModel, newdata = df) %>%
+  as_tibble() %>%
+  mutate(repurchase = df$repurchase)
 ```
 
 ## Designate he column names of our outcome and predictor variables
 
 ```{r} 
-label <- "high_share"
+label <- "repurchase"
 predictors <- names(df)[!(names(df) %in% label)]
 ```
 
@@ -61,9 +81,12 @@ test_df <- slice(df, -train_idx)
 
 ```{r}
 y_train <- train_df[,label][[1]]
-y_train <- as.integer(y_train)
 y_test <- test_df[,label][[1]]
-y_test <- as.integer(y_test)
+
+# Ensure levels of y_train are valid R variable names
+levels(y_train) <- make.names(levels(y_train))
+levels(y_test) <- make.names(levels(y_test))
+
 head(y_train)
 ```
 
@@ -73,24 +96,17 @@ head(y_train)
 findCorrelation(cor(train_df[,predictors]))
 ```
 
-```{r}
-predictors <- predictors[-c(5, 6, 20)]
-```
-
-## Check for linear combinations
-
-```{r}
-findLinearCombos(train_df[,predictors])
-```
-
-```{r}
-predictors <- predictors[-35]
-```
-
 ## Check for missing values
 
 ```{r}	
 summary(train_df)
+```
+
+### Use median imputation
+
+```{r}
+preproc_par <- preProcess(train_df[,predictors], method = c("medianImpute"))
+train_df[,predictors] <- predict(preproc_par, train_df[,predictors])
 ```
 
 ## Scale and center the data
@@ -100,11 +116,16 @@ preproc_par <- preProcess(train_df[,predictors], method=c("center", "scale"))
 train_df[,predictors] <- predict(preproc_par, train_df[,predictors])
 ```
 
+```{r}
+preprocPar <- preProcess(test_df[,predictors], method=c("center", "scale", "medianImpute"))
+test_df[,predictors] <- predict(preprocPar, test_df[,predictors])
+```
+
 # Model training, validation, and testing
 
 ## Training
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 quickTrain <- trainControl(method = "cv", number = 5)
 
 model_rf <- train(x = train_df[,predictors], y = y_train, method = "rf", trControl = quickTrain)
@@ -133,7 +154,7 @@ comparison_alg
 
 ### Additional validation methods
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 # Cross validation training method
 crossValidation <- trainControl(method = "CV")
 
@@ -141,8 +162,8 @@ crossValidation <- trainControl(method = "CV")
 bootstraping <- trainControl(method = "boot")
 
 # Apply both methods to a random forest model
-model_cv <- train(x= train_df[,predictors], y= train_df[,label], method = "rf", trControl = crossValidation)
-model_boot <- train(x= train_df[,predictors], y= train_df[,label], method = "rf", trControl = bootstraping)
+model_cv <- train(x= train_df[,predictors], y = y_train, method = "rf", trControl = crossValidation)
+model_boot <- train(x= train_df[,predictors], y = y_train, method = "rf", trControl = bootstraping)
 ```
 
 ```{r}
@@ -157,36 +178,38 @@ comparison_val
 
 ### Model tuning
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 # Grid tuning
-gridTune <- trainControl(method = "CV", search  = "grid")
+gridTune <- trainControl(method = "CV", search = "grid")
 
 # Random search tuning method:
-randomTune <- trainControl(method = "CV", search  = "random")
+randomTune <- trainControl(method = "CV", search = "random")
 
 # Adaptive search tuning method:
 adaptiveTune <- trainControl(
-  method ="adaptive_cv",
-  adaptive =list(min=2, alpha =0.05,method ="gls", complete =TRUE),
-  search ="random"
+  method = "adaptive_cv",
+  adaptive = list(min = 2, alpha = 0.05, method = "gls", complete = TRUE),
+  search = "random"
   )
 
 # Apply all three methods to a glmnet model
 model_grid <- train(
-  x= train_df[,predictors], y= train_df[,label], method = "glmnet",
+  x= train_df[,predictors], y= y_train, method = "glmnet",
   trControl = gridTune, tuneLength = 5
   )
 model_random <- train(
-  x= train_df[,predictors], y= train_df[,label], method = "glmnet",
+  x= train_df[,predictors], y= y_train, method = "glmnet",
   trControl = randomTune, tuneLength = 25
   )
-model_adaptive  <- train(
-  x= train_df[,predictors], y= train_df[,label], method = "glmnet",
+model_adaptive <- train(
+  x= train_df[,predictors], y= y_train, method = "glmnet",
   trControl = adaptiveTune, tuneLength = 25
   )
+```
 
+```{r}
 comparison_tune <- tibble(
-  Model = c("grid","random","adaptive"),
+  Model = c("grid", "random", "adaptive"),
   Accuracy_base = c(
     max(model_grid$results$Accuracy), max(model_random$results$Accuracy),
     max(model_adaptive$results$Accuracy)
@@ -201,7 +224,7 @@ comparison_tune
 comparison_all <- bind_rows(comparison_alg, comparison_val, comparison_tune)
 
 det_OOS_accuracy <- function(model){
-  confusionMatrix(predict(model,test_df), y_test)$overall[[1]]
+  confusionMatrix(predict(model, test_df), y_test)$overall[[1]]
 }
 
 all_model_list <- list(
@@ -222,15 +245,24 @@ arrange(comparison_all, desc(OOS_Acc))
 
 ```{r}
 varImp(model_xgbTree)
+```
+
+```{r}
 plot(varImp(model_xgbTree), main = "xgbTree")
+```
+
+```{r}
 plot(varImp(model_nnet), main = "nnet")
+```
+
+```{r}
 plot(varImp(model_glmnet), main = "glmnet")
 ```
 
 # Ensemble learning
 
-```{r}
-algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear","svmLinear2")
+```{r, warning=FALSE, message=FALSE}
+algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear", "svmLinear2")
 
 stack_index = createFolds(y_train, k = 5) # We want to fix our index for comparison and validity
 
@@ -240,8 +272,6 @@ listControl <- trainControl(
   savePredictions = TRUE, # necessary for stack model later
   index = stack_index
 )
-
-
 
 models <- caretList(
   x = train_df[,predictors], y = y_train, trControl = listControl,
@@ -259,7 +289,7 @@ modelCor(resamples(models))
 
 ## Automatic model selection
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r message=FALSE, warning=FALSE}
 stackControl <- trainControl(
   method = "repeatedcv", number = 10, repeats = 3, classProbs = TRUE,
   index = stack_index
@@ -275,24 +305,36 @@ stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
 ## Compare the models
 
 ```{r}
-ensemble_tree <- predict(stack_tree, test_df, type = "prob")
-ensemble_glm <- predict(stack_glm, test_df, type = "prob")
-ensemble_gbm <- predict(stack_gbm, test_df, type = "prob")
+ensemble_tree <- predict(stack_tree, test_df) %>%
+  as_tibble() %>%
+  select(ensemble_tree = X1)
+ensemble_glm <- predict(stack_glm, test_df) %>%
+  as_tibble() %>%
+  select(ensemble_glm = X1)
+ensemble_gbm <- predict(stack_gbm, test_df) %>%
+  as_tibble() %>%
+  select(ensemble_gbm = X1)
 
-Results <- as.data.frame(predict(models, test_df, type)) %>% 
-  cbind(ensemble_tree, ensemble_glm, ensemble_gbm)
+Results <- as_tibble(predict(models, test_df)) %>% 
+  bind_cols(ensemble_tree, ensemble_glm, ensemble_gbm)
 
 det_OOS_accuracy_probs <- function(model){
-  preds <- factor(model<0.5, labels =c("Zero", "One"))
-  confusionMatrix(preds,testDF$Survived)$overall[[1]]
+  preds <- factor(model < 0.5, labels = c("X0", "X1"))
+  confusionMatrix(preds, y_test)$overall[[1]]
 }
 
-OOS_ACC <- apply(Results, MARGIN = 2, FUN = det_OOS_accuracy_probs)
+OOS_ACC <- Results %>%
+  summarise(across(everything(), det_OOS_accuracy_probs))
 
 OOS_ACC
 
-barplot(
-  OOS_ACC, ylim = c(min(OOS_ACC) * 0.9, max(OOS_ACC) * 1.1),
-  xpd = FALSE, las = 2, space = 1
-)
+OOS_ACC %>%
+  pivot_longer(cols = everything(), names_to = "Model", values_to = "OOS_ACC") %>%
+  ggplot() +
+  geom_bar(aes(x = Model, y = OOS_ACC), stat = "identity") + 
+  labs(
+    x = NULL
+  )
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
