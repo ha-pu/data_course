@@ -139,6 +139,20 @@ model_xgbTree <- train(x = train_df[,predictors], y = y_train, method = "xgbTree
 model_xgbLinear <- train(x = train_df[,predictors], y = y_train, method = "xgbLinear", trControl = quickTrain)
 ```
 
+### Training progress
+
+```{r}
+model_glmnet %>%
+  ggplot(highlight = TRUE) +
+  theme_bw()
+```
+
+```{r}
+model_nnet %>%
+  ggplot(highlight = TRUE) +
+  theme_bw()
+```
+
 ## Validation
 
 ```{r}
