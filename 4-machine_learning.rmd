@@ -305,25 +305,22 @@ stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
 ## Compare the models
 
 ```{r}
-ensemble_tree <- predict(stack_tree, test_df) %>%
-  as_tibble() %>%
-  select(ensemble_tree = X1)
-ensemble_glm <- predict(stack_glm, test_df) %>%
-  as_tibble() %>%
-  select(ensemble_glm = X1)
-ensemble_gbm <- predict(stack_gbm, test_df) %>%
-  as_tibble() %>%
-  select(ensemble_gbm = X1)
+results <- tibble(
+  ensemble_tree = predict(stack_tree, test_df, type = "prob"),
+  ensemble_glm = predict(stack_glm, test_df, type = "prob"),
+  ensemble_gbm = predict(stack_gbm, test_df, type = "prob")
+)
 
-Results <- as_tibble(predict(models, test_df)) %>% 
-  bind_cols(ensemble_tree, ensemble_glm, ensemble_gbm)
+results <- predict(models, test_df) %>%
+  as_tibble() %>% 
+  bind_cols(results)
 
 det_OOS_accuracy_probs <- function(model){
   preds <- factor(model < 0.5, labels = c("X0", "X1"))
   confusionMatrix(preds, y_test)$overall[[1]]
 }
 
-OOS_ACC <- Results %>%
+OOS_ACC <- results %>%
   summarise(across(everything(), det_OOS_accuracy_probs))
 
 OOS_ACC
@@ -334,7 +331,7 @@ OOS_ACC %>%
   geom_bar(aes(x = Model, y = OOS_ACC), stat = "identity") + 
   labs(
     x = NULL
-  )
+  ) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
