@@ -2,8 +2,11 @@ channels:
   - conda-forge
 dependencies:
   - r-base=4.2.1
-  - r-tidyverse
-  - r-sjplot
   - r-caret
   - r-caretensemble
+  - r-gbm
+  - r-glmnet
+  - r-randomforest
+  - r-sjplot
+  - r-tidyverse
   - r-xgboost
