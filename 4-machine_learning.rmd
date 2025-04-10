@@ -125,7 +125,7 @@ test_df[,predictors] <- predict(preprocPar, test_df[,predictors])
 
 ## Training
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, include=FALSE}
 quickTrain <- trainControl(method = "cv", number = 5)
 
 model_rf <- train(x = train_df[,predictors], y = y_train, method = "rf", trControl = quickTrain)
@@ -154,7 +154,7 @@ comparison_alg
 
 ### Additional validation methods
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, include=FALSE}
 # Cross validation training method
 crossValidation <- trainControl(method = "CV")
 
@@ -162,8 +162,8 @@ crossValidation <- trainControl(method = "CV")
 bootstraping <- trainControl(method = "boot")
 
 # Apply both methods to a random forest model
-model_cv <- train(x= train_df[,predictors], y = y_train, method = "rf", trControl = crossValidation)
-model_boot <- train(x= train_df[,predictors], y = y_train, method = "rf", trControl = bootstraping)
+model_cv <- train(x =  train_df[,predictors], y = y_train, method = "rf", trControl = crossValidation)
+model_boot <- train(x =  train_df[,predictors], y = y_train, method = "rf", trControl = bootstraping)
 ```
 
 ```{r}
@@ -178,7 +178,7 @@ comparison_val
 
 ### Model tuning
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, include=FALSE}
 # Grid tuning
 gridTune <- trainControl(method = "CV", search = "grid")
 
@@ -194,15 +194,15 @@ adaptiveTune <- trainControl(
 
 # Apply all three methods to a glmnet model
 model_grid <- train(
-  x= train_df[,predictors], y= y_train, method = "glmnet",
+  x =  train_df[,predictors], y =  y_train, method = "glmnet",
   trControl = gridTune, tuneLength = 5
   )
 model_random <- train(
-  x= train_df[,predictors], y= y_train, method = "glmnet",
+  x =  train_df[,predictors], y =  y_train, method = "glmnet",
   trControl = randomTune, tuneLength = 25
   )
 model_adaptive <- train(
-  x= train_df[,predictors], y= y_train, method = "glmnet",
+  x =  train_df[,predictors], y =  y_train, method = "glmnet",
   trControl = adaptiveTune, tuneLength = 25
   )
 ```
@@ -261,7 +261,7 @@ plot(varImp(model_glmnet), main = "glmnet")
 
 # Ensemble learning
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, include=FALSE}
 algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear", "svmLinear2")
 
 stack_index = createFolds(y_train, k = 5) # We want to fix our index for comparison and validity
