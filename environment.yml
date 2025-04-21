@@ -4,6 +4,7 @@ dependencies:
   - r-base=4.2.1
   - r-caret
   - r-caretensemble
+  - r-ellmer
   - r-gbm
   - r-glmnet
   - r-randomforest
