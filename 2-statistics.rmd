@@ -138,6 +138,5 @@ summary(out)
 ## Questions
 
 + How are these results different from the previous ones?
-+ What do you think about the results of the t-test and ANOVA?
 + Are there immediate takeaways for our efforts to increase skills (UNS)?
 + What analyses should we do next?

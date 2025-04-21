@@ -55,8 +55,6 @@ tab_model(mod1)
 ## Questions
 
 + Does the intercept-only model tell us anything about the data?
-+ Would you rely on this model alone for anything actionable?
-+ What does this model actually predict?
 
 # Direct effects model
 
@@ -95,10 +93,7 @@ tibble(
 ## Questions
 
 + What should the product managers do to increase the car acceptance?
-+ How does a discount of 5,000 USD on the price affect the car acceptance?
 + Which features have the strongest relationship with acceptance? Why might that be the case?
-+ Why might the number of doors have a small effect on class?
-+ Model 4 has the highest R-squared. Why does adding price-related features improve it?
 
 # Interaction metric x metric
 
@@ -119,9 +114,7 @@ plot_model(mod5, type = "pred", terms = c("buying", "maint"))
 ## Questions
 
 + Should your marketing department offer a discount on mainteance for new customers?
-+ How might the effect of buying on car acceptance depend on the level of maint?
 + Is the direction of the interaction consistent with what you might expect in real life?
-+ Do you think a simple additive model is enough for understanding how price-related factors influence car acceptance?
 
 # Interaction metric x factor
 
@@ -151,12 +144,9 @@ plot_model(mod7, type = "pred", terms = c("buying", "safety"))
 ## Questions
 
 + Does greater storage space justify a higher price?
-+ The interaction term buying:lug_bootTRUE is negative and significant. What does this tell us?
-+ Look at the main effect of lug_bootTRUE and the interaction. How do these work together?
 + Why might the benefit of a large luggage space decrease as a car becomes more expensive?
 + Does this interaction feel intuitive in a real-world consumer context? If not, what might explain it?
 + Does a higher safety level justify a higher price?
-+ Why might higher-priced safe cars get lower class scores?
 + Do you think the price of a car should influence class more or less when the car is very safe? Why?
 
 # Interaction factor x factor
@@ -179,8 +169,5 @@ plot_model(mod8, type = "pred", terms = c("lug_boot", "safety"))
 ## Questions
 
 + Does greater storage space balance lower safety levels?
-+ The main effect of lug_bootTRUE is not significant, but both interactions with safety are highly significant. What does this imply?
-+ How do these numbers change the story about the value of trunk space?
 + Imagine two cars with the same features, except one has a big trunk. When would that big trunk boost the car's predicted class score?
 + Why might a large trunk be more valued when the car is also moderately or highly safe?
-+ Does the model suggest that trunk size matters more for safer vehicles?

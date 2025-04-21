@@ -10,7 +10,6 @@ date: "April 8, 2025"
 
 ```{r}
 library(caret)
-library(caretEnsemble)
 library(tidyverse)
 ```
 
@@ -352,102 +351,4 @@ plot(varImp(model_nnet), main = "nnet")
 
 ```{r}
 plot(varImp(model_glmnet), main = "glmnet")
-```
-
-# Ensemble learning
-
-Ensemble learning is a machine learning technique that combines predictions from
-multiple models to improve accuracy, robustness, and generalization. The idea is
-simple but powerful: A group of diverse models working together is usually
-better than any single one.
-
-There are mulitpe ways to combine models:
-* Bagging: Build many models on different random subsets of the data and combine
-  them via averaging (regression) or voting (classification).
-* Boosting: Build models sequentially, where each model learns from the errors
-  of the previous and combine them with weighted averaging.
-* Stacking: Build several base models and train a meta-model on their predictions.
-
-We first define a list of models and apply them to the same folds of our data.
-
-```{r, warning=FALSE, message=FALSE, include=FALSE}
-algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear", "svmLinear2")
-
-stack_index = createFolds(y_train, k = 5) # We want to fix our index for comparison and validity
-
-listControl <- trainControl(
-  method = "cv", number = 5, 
-  classProbs = TRUE, # We need to predict probabilities not 0 or 1 (more info)
-  savePredictions = TRUE, # necessary for stack model later
-  index = stack_index
-)
-
-models <- caretList(
-  x = train_df[,predictors], y = y_train, trControl = listControl,
-  methodList = algoList
-)
-```
-
-## Compare the models
-
-```{r}
-results <- resamples(models)
-summary(results)
-modelCor(resamples(models))
-```
-
-## Automatic model selection
-
-Next, we use a meta model to combine the predictions of the base models. The
-meta model can be a simple linear regression model or a more complex model like
-an extrame gradient boosting tree (xgbTree), a gradient boosting machine (gbm),
-or a simle logistic regression (glm).
-
-
-```{r message=FALSE, warning=FALSE}
-stackControl <- trainControl(
-  method = "repeatedcv", number = 10, repeats = 3, classProbs = TRUE,
-  index = stack_index
-  )
-
-stack_tree <- caretStack(models, method = "xgbTree", trControl = stackControl)
-
-stack_gbm <- caretStack(models, method = "gbm", trControl = stackControl)
-
-stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
-```
-
-## Out-of-Sample Accuracy
-
-```{r}
-results <- tibble(
-  ensemble_tree = predict(stack_tree, test_df, type = "prob"),
-  ensemble_glm = predict(stack_glm, test_df, type = "prob"),
-  ensemble_gbm = predict(stack_gbm, test_df, type = "prob")
-)
-
-results <- predict(models, test_df) %>%
-  as_tibble() %>% 
-  bind_cols(results)
-
-det_OOS_accuracy_probs <- function(model){
-  preds <- factor(model < 0.5, labels = c("X0", "X1"))
-  confusionMatrix(preds, y_test)$overall[[1]]
-}
-
-OOS_ACC <- results %>%
-  summarise(across(everything(), det_OOS_accuracy_probs))
-
-OOS_ACC
-
-OOS_ACC %>%
-  pivot_longer(cols = everything(), names_to = "Model", values_to = "OOS_ACC") %>%
-  ggplot() +
-  geom_bar(aes(x = Model, y = OOS_ACC), stat = "identity") + 
-  geom_hline(aes(yintercept = max(OOS_ACC)), linetype = "dashed", color = "darkred") +
-  labs(
-    x = NULL
-  ) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```

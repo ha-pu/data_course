@@ -378,16 +378,7 @@ data4$Issue
   feature to the initial results.
 + **Visualize the results**: Create a visual analysis that compares the results
   from the previous step to your intitial results.
-+ **Explore different models**: Experiment with different OpenAI models
-  (e.g., `gpt-4.1`, `gpt-4.1-mini`, `gpt-4o-mini`) and compare their performance
-  in classifying the reviews. Document any differences you observe.
 + **Multi-class classification**: Extend the classification task to include more
   than two classes (e.g., very negative, negative, neutral, positive, very
   positive) and evaluate the model's performance on this multi-class problem.
-+ **Ethical considerations**: Discuss the ethical implications of using LLMs for
-  sentiment analysis and classification, including potential biases in the model
-  and how to mitigate them.
-+ **Real-world application**: Discuss other real-world applications for text
-  classification with LLMs other than feedback classification. What
-  considerations would you need to take into account when applying LLMs in these
-  scenarios?
+
