@@ -152,10 +152,6 @@ model_rf <- train(x = train_df[,predictors], y = y_train, method = "rf", trContr
 model_glmnet <- train(x = train_df[,predictors], y = y_train, method = "glmnet", trControl = quickTrain)
 
 model_nnet <- train(x = train_df[,predictors], y = y_train, method = "nnet", trControl = quickTrain)
-
-model_xgbTree <- train(x = train_df[,predictors], y = y_train, method = "xgbTree", trControl = quickTrain)
-
-model_xgbLinear <- train(x = train_df[,predictors], y = y_train, method = "xgbLinear", trControl = quickTrain)
 ```
 
 ### Training process
@@ -179,8 +175,7 @@ comparison_alg <- tibble(
   Model = c("rf","glmnet","nnet","xgbTree","xgbLinear"),
   Accuracy_base = c(
     max(model_rf$results$Accuracy), max(model_glmnet$results$Accuracy),
-    max(model_nnet$results$Accuracy), max(model_xgbTree$results$Accuracy),
-    max(model_xgbLinear$results$Accuracy))
+    max(model_nnet$results$Accuracy)
 )
 
 comparison_alg %>%
@@ -308,8 +303,7 @@ det_OOS_accuracy <- function(model){
 }
 
 all_model_list <- list(
-  model_rf, model_glmnet, model_nnet, model_xgbTree,
-  model_xgbLinear, model_cv, model_boot, model_grid,
+  model_rf, model_glmnet, model_nnet, model_cv, model_boot, model_grid,
   model_random, model_adaptive
 )
 
@@ -336,14 +330,6 @@ arrange(comparison_all, desc(OOS_Acc))
 ```
 
 ### Variable importance
-
-```{r}
-varImp(model_xgbTree)
-```
-
-```{r}
-plot(varImp(model_xgbTree), main = "xgbTree")
-```
 
 ```{r}
 plot(varImp(model_nnet), main = "nnet")
