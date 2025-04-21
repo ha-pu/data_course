@@ -172,17 +172,17 @@ model_nnet %>%
 
 ```{r}
 comparison_alg <- tibble(
-  Model = c("rf","glmnet","nnet","xgbTree","xgbLinear"),
+  Model = c("rf", "glmnet", "nnet"),
   Accuracy_base = c(
     max(model_rf$results$Accuracy), max(model_glmnet$results$Accuracy),
     max(model_nnet$results$Accuracy)
+  )
 )
 
 comparison_alg %>%
   ggplot() +
   geom_bar(aes(x = Model, y = Accuracy_base), stat = "identity") +
   geom_hline(aes(yintercept = max(Accuracy_base)), linetype = "dashed", color = "darkred") +
-  scale_y_continuous(limits = c(0.7, 0.9)) +
   theme_bw()
 
 comparison_alg
@@ -222,7 +222,6 @@ comparison_val %>%
   ggplot() +
   geom_bar(aes(x = Model, y = Accuracy_base), stat = "identity") +
   geom_hline(aes(yintercept = max(Accuracy_base)), linetype = "dashed", color = "darkred") +
-  scale_y_continuous(limits = c(0.7, 0.9)) +
   theme_bw()
 
 comparison_val
@@ -286,7 +285,6 @@ comparison_tune %>%
   ggplot() +
   geom_bar(aes(x = Model, y = Accuracy_base), stat = "identity") +
   geom_hline(aes(yintercept = max(Accuracy_base)), linetype = "dashed", color = "darkred") +
-  scale_y_continuous(limits = c(0.7, 0.9)) +
   theme_bw()
 
 comparison_tune
@@ -323,7 +321,6 @@ comparison_all %>%
   geom_point(aes(x = Model, y = Accuracy, color = Base)) +
   geom_hline(aes(yintercept = max(comparison_all$Accuracy_base)), colour = "darkred", linetype = "dashed") +
   geom_hline(aes(yintercept = max(comparison_all$OOS_Acc)), colour = "darkblue", linetype = "dashed") +
-  scale_y_continuous(limits = c(0.7, 0.9)) +
   theme_bw()
 
 arrange(comparison_all, desc(OOS_Acc))
