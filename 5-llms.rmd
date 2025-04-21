@@ -6,6 +6,12 @@ date: "April 21, 2025"
 
 # Setup
 
+## Install ellmer package
+
+```{r}
+install.packages("ellmer")
+```
+
 ## Load packages
 
 ```{r}
