@@ -7,7 +7,7 @@ install.packages(c(
   "glmnet",
   "randomForest",
   "sjPlot",
-  "xgboost"# ,
-  #"IRkernel"
+  "xgboost",
+  "IRkernel"
 ))
-# IRkernel::installspec(user = FALSE)
+IRkernel::installspec(user = FALSE)
