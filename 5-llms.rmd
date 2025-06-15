@@ -29,21 +29,20 @@ review. Variables:
 + data: A tibble containing the customer reviews and their corresponding Review_IDs.
 
 ```{r}
-
-reviews = c(
-    "My daughter absolutely loves this bike! Easy to assemble and sturdy.",
-    "The bike is well-made and looks great, but it arrived with a scratch.",
-    "Perfect size for my 5-year-old son. He rides it every day!",
-    "The training wheels are a bit flimsy, but otherwise it's a good bike.",
-    "Great value for the price. Assembly was simple and instructions were clear.",
-    "My son outgrew his old bike, and this was a perfect upgrade. Highly recommend.",
-    "Poor quality materials. The chain fell off after one week of use.",
-    "We had trouble with the brakes at first, but customer service was very helpful.",
-    "Fantastic bike! My daughter loves the color and design.",
-    "The seat could be more comfortable, but it's a nice bike overall."
+reviews <- c(
+  "My daughter absolutely loves this bike! Easy to assemble and sturdy.",
+  "The bike is well-made and looks great, but it arrived with a scratch.",
+  "Perfect size for my 5-year-old son. He rides it every day!",
+  "The training wheels are a bit flimsy, but otherwise it's a good bike.",
+  "Great value for the price. Assembly was simple and instructions were clear.",
+  "My son outgrew his old bike, and this was a perfect upgrade. Highly recommend.",
+  "Poor quality materials. The chain fell off after one week of use.",
+  "We had trouble with the brakes at first, but customer service was very helpful.",
+  "Fantastic bike! My daughter loves the color and design.",
+  "The seat could be more comfortable, but it's a nice bike overall."
 )
 
-data = tibble(Customer_Review = reviews) %>%
+data <- tibble(Customer_Review = reviews) %>%
   mutate(Review_ID = row_number())
 
 data
@@ -65,7 +64,7 @@ base_model <- "gpt-4.1-nano" # Replace with your preferred model.
 
 # Test LLM
 
-This code initializes a chat session with the OpenAI GPT-4o-mini model and sends
+This code initializes a chat session with the OpenAI GPT-4.1-nano model and sends
 a query to the model asking "Who created R?". The response from the model is
 not printed to the console (echo = FALSE).
 
@@ -236,7 +235,7 @@ A numeric value representing the customer score extracted from the chat model's 
 
 ### Examples:
 
-```{r}
+```
 # system_prompt <- "You are a helpful assistant."
 # user_input <- "How can I improve my coding skills?"
 # score <- get_response2(system_prompt, user_input)
@@ -317,7 +316,7 @@ response, specifically the issue summary.
 
 ### Examples:
 
-```{r}
+```
 # system_prompt <- "You are a helpful assistant."
 # user_input <- "What is the weather like today?"
 # get_response3(system_prompt, user_input)
