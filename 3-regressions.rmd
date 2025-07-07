@@ -1,7 +1,7 @@
 ---
 title: "Regression Analysis"
 author: Harald Puhr
-date: "April 7, 2025"
+date: "July 7, 2025"
 ---
 
 [Data Source](https://github.com/ha-pu/data_files/blob/main/README.md#car-evaluation-dataset)
@@ -184,3 +184,29 @@ plot_model(mod8, type = "pred", terms = c("lug_boot", "safety"))
 + Imagine two cars with the same features, except one has a big trunk. When would that big trunk boost the car's predicted class score?
 + Why might a large trunk be more valued when the car is also moderately or highly safe?
 + Does the model suggest that trunk size matters more for safer vehicles?
+
+# Logistic regression
+
+## Transform binary variable from factor to logical
+
+We had to transform the `lug_boot` variable to factor for some of the functions
+used above. Now we will transform it back to a logical variable for the logistic
+regression.
+
+```{r}
+df$lug_boot <- df$lug_boot == "TRUE"
+```
+
+## Fit model
+
+```{r}
+mod9 <- glm(lug_boot ~ class + doors + safety + buying + maint, data = df, family = binomial(link = "logit"))
+```
+
+```{r}
+tab_model(mod9, transform = NULL)
+```
+
+```{r}
+tab_model(mod9)
+```
