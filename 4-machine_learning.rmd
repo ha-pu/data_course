@@ -432,7 +432,7 @@ results <- predict(models, test_df) %>%
   bind_cols(results)
 
 det_OOS_accuracy_probs <- function(model) {
-  preds <- factor(model < 0.5, labels = c("X0", "X1"))
+  preds <- factor(model >= 0.5, labels = c("X0", "X1"))
   confusionMatrix(preds, y_test)$overall[[1]]
 }
 
