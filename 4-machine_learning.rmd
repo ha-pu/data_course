@@ -486,10 +486,10 @@ stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
 ## Out-of-Sample Accuracy
 
 ```{r}
-results <- data.frame(
-  ensemble_tree = predict(stack_tree, test_df)$X1,
-  ensemble_glm = predict(stack_glm, test_df)$X1,
-  ensemble_gbm = predict(stack_gbm, test_df)$X1
+results <- tibble(
+  ensemble_tree = predict(stack_tree, test_df, type = "prob"),
+  ensemble_glm = predict(stack_glm, test_df, type = "prob"),
+  ensemble_gbm = predict(stack_gbm, test_df, type = "prob")
 )
 
 results <- predict(models, test_df) %>%
