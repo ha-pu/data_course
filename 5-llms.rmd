@@ -309,11 +309,11 @@ mentioned in the review.
 
 + `system`: A character string representing the system prompt to guide the
   chat model.
-+ `user`: A character string representing the user`s input or query.
++ `user`: A character string representing the user's input or query.
 
 ### Returns:
 
-A character string containing the extracted data from the chat model`s
+A character string containing the extracted data from the chat model's
 response, specifically the issue summary.
 
 ### Examples:
@@ -384,7 +384,7 @@ data4$Issue
   in classifying the reviews. Document any differences you observe.
 + **Multi-class classification**: Extend the classification task to include more
   than two classes (e.g., very negative, negative, neutral, positive, very
-  positive) and evaluate the model`s performance on this multi-class problem.
+  positive) and evaluate the model's performance on this multi-class problem.
 + **Ethical considerations**: Discuss the ethical implications of using LLMs for
   sentiment analysis and classification, including potential biases in the model
   and how to mitigate them.
