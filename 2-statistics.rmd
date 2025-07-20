@@ -1,19 +1,39 @@
 ---
 title: "Basic Statistics"
 author: Harald Puhr
-date: "April 7, 2025"
+date: "July 20, 2025"
 ---
 
 [Data Source](https://github.com/ha-pu/data_files/tree/main#user-knowledge-modeling-dataset)
 
 # Load tidyverse package and data
+
 ```{r}
 library(tidyverse)
 ```
 
 ```{r}
 df <- read_csv("https://raw.githubusercontent.com/ha-pu/data_files/refs/heads/main/1-user_knowledge.csv")
+```
+
+Code variable `UNS` as type factor to better handle categorical data.
+
+```{r}
 df$UNS <- factor(df$UNS, levels = c("Very Low", "Low", "Middle", "High"))
+```
+
+# Inspect data frame
+
+```{r}
+slice_head(df)
+```
+
+```{r}
+glimpse(df)
+```
+
+```{r}
+summary(df)
 ```
 
 # Get frequency of skill levels
@@ -77,7 +97,8 @@ df %>%
 
 ## Questions
 
-+ Do the boxplots tell us anything about the relevance of the study effort variables?
++ Do the box plots tell us anything about the relevance of the study effort
+  variables?
 + Are there immediate takeaways for our efforts to increase skills (UNS)?
 
 # Correlation between study effort variables

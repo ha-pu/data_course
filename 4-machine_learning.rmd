@@ -1,7 +1,7 @@
 ---
 title: "Machine Learning"
 author: Harald Puhr
-date: "April 8, 2025"
+date: "July 20, 2025"
 ---
 
 [Data Source](https://github.com/ha-pu/data_files#repurchase-likelihood-dataset)
@@ -29,11 +29,28 @@ df <- read_csv("https://raw.githubusercontent.com/ha-pu/data_files/refs/heads/ma
 
 # Preparing our data
 
+The implementations of most machine learning algorithms in R have very specific
+requirements regarding the coding of input data. This means we have to take
+more steps to prepare the data than when working with simple regressions.
+
+## Inspect data frame
+
+```{r}
+slice_head(df)
+```
+
 ```{r}
 glimpse(df)
 ```
 
+```{r}
+summary(df)
+```
+
 ## Recode variables
+
+Code variables `repurchase`, `customer_sex`, and `customer_tier` as type factor
+to better handle categorical data.
 
 ```{r}
 df <- df %>%
@@ -46,13 +63,18 @@ df <- df %>%
 
 ## Drop columns which do not contain relevant information
 
+Our data set includes only one observation by customer. This means by including
+the variables `customer_id` and `customer_name`, we would create
+customer-specific predictions. This is not what we want to do! We want to
+generalize from our existing customers to new customers.
+
 ```{r}
 df <- select(df, -customer_id, -customer_name)
 ```
 
 ## Transform categorical predictors into dummy variables
 
-R stores categorial data as factors (e.g., variable = A, B, A, A, B). For
+R stores categorical data as factors (e.g., variable = A, B, A, A, B). For
 machine learning, we transform them into separate columns:
 (variable.A = 1, 0, 1, 1, 0; variable.B = 0, 1, 0, 0, 1).
 
@@ -123,7 +145,7 @@ train_df[, predictors] <- predict(preproc_par, train_df[, predictors])
 
 Machine learning algorithms do not handle differences in the scaling of
 variables well. This is an issue if we use variables that have different data
-ranges in the same model (e.g., Total GDP and GPD/cpaita). To solve the issue,
+ranges in the same model (e.g., Total GDP and GPD/capita). To solve the issue,
 we standardize numeric predictors to *mean = 0* and *SD = 1*.
 
 ```{r}
@@ -137,6 +159,44 @@ test_df[, predictors] <- predict(preprocPar, test_df[, predictors])
 ```
 
 # Model training, validation, and testing
+
+## Algorithms
+
+In this exercise, we will start with five frequently-used machine learning
+algorithms:
+
+* Random Forest (`method = "rf"`):
+  * What it does: Random Forest is an ensemble learning method that builds
+    multiple decision trees and merges their outputs for more accurate and
+    stable predictions.
+  * How it works: Each tree is trained on a random sample (with replacement) of
+    the data, and at each split in the tree, a random subset of features is
+    considered. The final prediction is made by majority vote (classification)
+    or average (regression).
+* Generalized Linear Model with Elastic Net Regularization (`method = "glmnet"`):
+  * What it does: This model combines ridge and lasso regression, useful for
+    handling multicollinearity and for variable selection.
+  * How it works: It minimizes the residual sum of squares with both L1 (lasso)
+    and L2 (ridge) penalties. The balance between these penalties is controlled
+    by a mixing parameter (`alpha`).
+* Neural Network (`method = "nnet"`):
+  * What it does: A simple feedforward neural network for classification or
+    regression.
+  * How it works: It uses one hidden layer with a customizable number of
+    neurons. The network learns weights for input features through
+    backpropagation and gradient descent, optimizing to reduce prediction error.
+* XGBoost with Decision Trees (`method = "xgbTree"`):
+  * What it does: XGBoost is an efficient implementation of gradient boosting
+    using decision trees.
+  * How it works: It builds trees sequentially, where each new tree corrects the
+    errors of the previous ones. It uses gradient descent to minimize a loss
+    function and includes regularization to prevent overfitting.
+* XGBoost with Linear Base Learners (`method = "xgbLinear"`):
+  * What it does: Like `xgbTree`, but uses linear models as base learners
+    instead of trees.
+  * How it works: It applies gradient boosting to linear models (like linear
+    regression), learning coefficients that minimize the loss function, with
+    regularization terms to avoid overfitting.
 
 ## Training
 
@@ -197,18 +257,18 @@ comparison_alg
 
 ### Additional validation methods
 
-We repeat the analysis with 10-fold cross-validation and bootstraping. In
-bootstraping, we create subsamples of the data by sampling with replacement.
-This means that some observations may be included multiple times in a subsample,
-while others may not be included at all. The model is trained on these
-subsamples, and the process is repeated multiple times to obtain a more robust
-estimate of the model's performance.
+We repeat the analysis with 10-fold cross-validation and bootstrapping. In
+bootstrapping, we create sub-samples of the data by sampling with replacement.
+This means that some observations may be included multiple times in a
+sub-sample, while others may not be included at all. The model is trained on
+these sub-samples, and the process is repeated multiple times to obtain a more
+robust estimate of the model's performance.
 
 ```{r, warning=FALSE, message=FALSE, include=FALSE}
 # Cross validation training method
 crossValidation <- trainControl(method = "cv", number = 10)
 
-# Boot strapping training method
+# Bootstrapping training method
 bootstraping <- trainControl(method = "boot")
 
 # Apply both methods to a random forest model
@@ -237,8 +297,8 @@ comparison_val
 
 ### Model tuning
 
-Through tuning, we can optimize the hyperparameters of our model to improve its
-learning behavor. Hyperparameters are parameters that are set before the
+Through tuning, we can optimize the hyper-parameters of our model to improve its
+learning behavior. Hyper-parameters are parameters that are set before the
 learning process begins. They are not learned from the data but are instead
 specified by the user before training the model. Examples include
 the learning rate, the number of trees in a random forest, the number of hidden
@@ -246,8 +306,10 @@ layers in a neural network, and the regularization strength in a linear model.
 
 We test three approaches to tuning:
 
-* Grid search: Systematically evaluates a predefined grid of hyperparameter combinations.
-* Random search: Randomly samples parameter combinations from the parameter space.
+* Grid search: Systematically evaluates a predefined grid of hyper-parameter
+  combinations.
+* Random search: Randomly samples parameter combinations from the parameter
+  space.
 * Adaptive search: Starts with a random search (or grid), but learns from
   performance during tuning and stops testing unpromising combinations early.
 
@@ -362,23 +424,25 @@ multiple models to improve accuracy, robustness, and generalization. The idea is
 simple but powerful: A group of diverse models working together is usually
 better than any single one.
 
-There are mulitpe ways to combine models:
+There are multiple ways to combine models:
+
 * Bagging: Build many models on different random subsets of the data and combine
   them via averaging (regression) or voting (classification).
 * Boosting: Build models sequentially, where each model learns from the errors
   of the previous and combine them with weighted averaging.
-* Stacking: Build several base models and train a meta-model on their predictions.
+* Stacking: Build several base models and train a meta-model on their
+  predictions.
 
 We first define a list of models and apply them to the same folds of our data.
 
 ```{r, warning=FALSE, message=FALSE, include=FALSE}
-algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear", "svmLinear2")
+algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear")
 
 stack_index <- createFolds(y_train, k = 5) # We want to fix our index for comparison and validity
 
 listControl <- trainControl(
   method = "cv", number = 5,
-  classProbs = TRUE, # We need to predict probabilities not 0 or 1 (more info)
+  classProbs = TRUE, # We need to predict probabilities not 0 or 1
   savePredictions = TRUE, # necessary for stack model later
   index = stack_index
 )
@@ -401,9 +465,10 @@ modelCor(resamples(models))
 
 Next, we use a meta model to combine the predictions of the base models. The
 meta model can be a simple linear regression model or a more complex model like
-an extrame gradient boosting tree (xgbTree), a gradient boosting machine (gbm),
-or a simle logistic regression (glm).
-
+an extreme gradient boosting tree (`xgbTree`), a gradient boosting machine
+(`gbm`), or a simple logistic regression (`glm`). GBM is an ensemble learning
+method that builds a strong predictive model by sequentially combining many weak
+models, typically decision trees.
 
 ```{r message=FALSE, warning=FALSE}
 stackControl <- trainControl(
