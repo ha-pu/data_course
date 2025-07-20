@@ -34,13 +34,13 @@ reviews <- c(
   "My daughter absolutely loves this bike! Easy to assemble and sturdy.",
   "The bike is well-made and looks great, but it arrived with a scratch.",
   "Perfect size for my 5-year-old son. He rides it every day!",
-  "The training wheels are a bit flimsy, but otherwise it`s a good bike.",
+  "The training wheels are a bit flimsy, but otherwise it's a good bike.",
   "Great value for the price. Assembly was simple and instructions were clear.",
   "My son outgrew his old bike, and this was a perfect upgrade. Highly recommend.",
   "Poor quality materials. The chain fell off after one week of use.",
   "We had trouble with the brakes at first, but customer service was very helpful.",
   "Fantastic bike! My daughter loves the color and design.",
-  "The seat could be more comfortable, but it`s a nice bike overall."
+  "The seat could be more comfortable, but it's a nice bike overall."
 )
 
 data <- data.frame(Customer_Review = reviews) %>%
