@@ -26,7 +26,7 @@ data frame with the reviews and assigns a unique Review_ID to each review.
 Variables:
 
 * reviews: A character vector containing customer reviews for a bike product.
-* data: A tibble containing the customer reviews and their corresponding
+* data: A data.frame containing the customer reviews and their corresponding
   Review_IDs.
 
 ```{r}

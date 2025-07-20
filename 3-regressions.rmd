@@ -43,15 +43,15 @@ summary(df)
 
 ```{r}
 df %>%
-    ggplot() +
-    geom_histogram(aes(x = class), bins = 25) +
-    theme_bw()
+  ggplot() +
+  geom_histogram(aes(x = class), bins = 25) +
+  theme_bw()
 ```
 
 ```{r}
 df %>%
-    select(where(is.numeric)) %>%
-    cor()
+  select(where(is.numeric)) %>%
+  cor()
 ```
 
 # Intercept-only model
@@ -98,23 +98,23 @@ tab_model(mod2, mod3, mod4)
 ```
 
 ```{r}
-tibble(
-    actual = df$class,
-    mod2 = predict(mod2),
-    mod3 = predict(mod3),
-    mod4 = predict(mod4)
+data.frame(
+  actual = df$class,
+  mod2 = predict(mod2),
+  mod3 = predict(mod3),
+  mod4 = predict(mod4)
 ) %>%
-    pivot_longer(cols = -actual) %>%
-    ggplot() +
-    geom_point(aes(x = actual, y = value, colour = name)) +
-    geom_smooth(aes(x = actual, y = value, colour = name), method = "lm", se = FALSE) +
-    geom_abline(slope = 1, intercept = 0) +
-    labs(
-        x = "Actual class",
-        y = "Predicted class",
-        colour = NULL
-    ) +
-    theme_bw()
+  pivot_longer(cols = -actual) %>%
+  ggplot() +
+  geom_point(aes(x = actual, y = value, colour = name)) +
+  geom_smooth(aes(x = actual, y = value, colour = name), method = "lm", se = FALSE) +
+  geom_abline(slope = 1, intercept = 0) +
+  labs(
+    x = "Actual class",
+    y = "Predicted class",
+    colour = NULL
+  ) +
+  theme_bw()
 ```
 
 ## Questions
