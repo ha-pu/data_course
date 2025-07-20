@@ -1,5 +1,7 @@
 # data_course
 
+**AOM 2025 PDW 15383: AI and Big Data Masterclass for International Management**
+
 This repository contains a collection of interactive R Markdown lessons designed
 to teach data-related topics in an accessible, hands-on way. By using Binder,
 educators and learners can easily launch a pre-built, containerized environment
@@ -11,13 +13,10 @@ educators and learners can easily launch a pre-built, containerized environment
 
 The repository is organized into the following files:
 
-| **Lesson File**          | **Description**                                                                      |
-|--------------------------|--------------------------------------------------------------------------------------|
-| `1-hello_world.rmd`      | An introductory lesson to R programming with a simple "Hello World" example.         |
-| `2-statistics.rmd`       | Covers foundational statistical concepts with real-world examples.                   |
-| `3-regressions.rmd`      | A comprehensive dive into regression analysis, including multiple regression models. |
-| `4-machine_learning.rmd` | Introduces essential machine learning concepts and their practical applications.     |
-| `5-llms.rmd`             | An exploration of Large Language Models (LLMs) with current insights and examples.   |
+| **Lesson File**            | **Description**                                                                      |
+|----------------------------|--------------------------------------------------------------------------------------|
+| `4-machine_learning.rmd`   | Introduces essential machine learning concepts and their practical applications.     |
+| `4-machine_learning.ipynb` | Google Colab implementation of rmd file.                                             |
 
 The repository is configured with:
 

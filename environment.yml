@@ -7,6 +7,5 @@ dependencies:
   - r-gbm
   - r-glmnet
   - r-randomforest
-  - r-sjplot
   - r-tidyverse
   - r-xgboost
