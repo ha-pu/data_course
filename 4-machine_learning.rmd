@@ -111,8 +111,8 @@ test_df <- slice(df, -train_idx)
 ## Change data type of the label variable
 
 ```{r}
-y_train <- train_df[, label][[1]]
-y_test <- test_df[, label][[1]]
+y_train <- train_df[, label]
+y_test <- test_df[, label]
 
 # Ensure levels of y_train are valid R variable names
 levels(y_train) <- make.names(levels(y_train))
@@ -487,9 +487,9 @@ stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
 
 ```{r}
 results <- data.frame(
-  ensemble_tree = predict(stack_tree, test_df, type = "prob"),
-  ensemble_glm = predict(stack_glm, test_df, type = "prob"),
-  ensemble_gbm = predict(stack_gbm, test_df, type = "prob")
+  ensemble_tree = predict(stack_tree, test_df)$X1,
+  ensemble_glm = predict(stack_glm, test_df)$X1,
+  ensemble_gbm = predict(stack_gbm, test_df)$X1
 )
 
 results <- predict(models, test_df) %>%
