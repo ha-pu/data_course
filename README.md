@@ -17,6 +17,8 @@ The repository is organized into the following files:
 |----------------------------|--------------------------------------------------------------------------------------|
 | `4-machine_learning.rmd`   | Introduces essential machine learning concepts and their practical applications.     |
 | `4-machine_learning.ipynb` | Google Colab implementation of rmd file.                                             |
+| `6-ml_exercise.rmd`        | Exerise in machine learning optimization.                                            |
+| `6-ml_exercise.ipynb`      | Google Colab implementation of rmd file.                                             |
 
 The repository is configured with:
 
