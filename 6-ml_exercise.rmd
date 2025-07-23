@@ -1,0 +1,204 @@
+---
+title: "Machine Learning Exercise"
+author: Harald Puhr
+date: "July 23, 2025"
+---
+
+[Data Source](https://github.com/ha-pu/data_files#subsidiary-income-dataset)
+
+# Load packages and data
+
+## Load packages
+
+```{r}
+library(caret)
+library(tidyverse)
+```
+
+```{r}
+set.seed(123)
+```
+
+## Load the data
+
+```{r}
+fdi_df <- read_csv(
+    "https://raw.githubusercontent.com/ha-pu/data_files/refs/heads/main/5-subsidiary_income.csv",
+    col_types = cols("i", "f", "i", "i", "n", "n", "n", "n", "n", "n", "n", "f", "f", "f")
+) %>%
+    drop_na()
+```
+
+## Take a look at the data
+
+```{r}
+glimpse(fdi_df)
+```
+
+# Prepare the data
+
+
+## Lagging predictors
+
+We need need to create predictions on the data from the previous years, so we
+have to lag the data.
+
+```{r}
+lagged_df <- fdi_df %>%
+    arrange(Year) %>%
+    mutate(
+        across(.cols = !contains("_L"), .fns = list(L1 = ~ lag(., n = 1))),
+        across(.cols = !contains("_L"), .fns = list(L2 = ~ lag(., n = 2))),
+        .by = c(DomesticId, ForeignId)
+    ) %>%
+    select(
+        !contains("Year_L") &
+            !contains("CountryCode_L") &
+            !contains("DomesticId_L") &
+            !contains("ForeignId_L")
+    ) %>%
+    replace_na(list(Income = 0))
+```
+
+## Remove features
+
+Now we need to remove the features we cannot know in advance.
+
+```{r}
+data_df <- select(
+    lagged_df,
+    -c(
+        "NumFeature1", "NumFeature2", "NumFeature3", "NumFeature4",
+        "NumFeature5", "NumFeature6", "FactorFeature1", "FactorFeature2",
+        "FactorFeature3"
+    )
+)
+```
+
+And finally, we also remove all observations for which we do not have any
+information and drop the Id columns.
+
+```{r}
+data_df$na_check <- rowSums(is.na(data_df[6:ncol(data_df)]))
+
+data_df <- data_df %>%
+    filter(na_check != 30) %>%
+    select(-c(na_check, Year, CountryCode, DomesticId, ForeignId)) %>%
+    as.data.frame()
+```
+
+## Take a look at the data
+
+```{r}
+glimpse(data_df)
+```
+
+# Modeling setup
+
+## Transform categorical predictors into dummy variables
+
+```{r}
+dummyModel <- dummyVars(Income ~ ., data_df, fullRank = FALSE)
+
+data_df <- data_df %>%
+    select(Income) %>%
+    bind_cols(data.frame(predict(dummyModel, newdata = data_df)))
+```
+
+## Define dependent and independent variables
+
+Let's define which column is our DV and which are the IVs
+
+```{r}
+label <- "Income"
+predictors <- setdiff(names(data_df), label)
+```
+
+## Train-test split
+
+Now we have to create a train test split
+
+```{r}
+train_index <- createDataPartition(data_df$Income, p = 0.8, list = FALSE)
+
+train_df <- data_df[train_index, ]
+
+test_df <- data_df[-train_index, ]
+```
+
+## Preprocessing
+
+Now we can decide on how to preprocess our data. Since we have a lot of dummies,
+it is likely helpful to drop low variance columns. Also we have many missing 
+values so we should use some imputation methods. 
+
+```{r}
+pre_process <- (method <- c("medianImpute", "nzv"))
+```
+
+## Define training parameters
+
+For the next step we have to decide on a train control method.
+To keep things consistent we want to manually define our folds first.
+
+```{r}
+testFolds <- createFolds(train_df[, label], k = 2)
+```
+
+Set training control to cross validation and adaptive tuning
+
+```{r}
+train_control <- trainControl(
+    method = "cv",
+    index = testFolds,
+    verboseIter = TRUE
+)
+```
+
+# Model training
+
+First let's train a gradient boosted tree model
+
+```{r}
+model_xgbTree <- train(
+    x = train_df[, predictors],
+    y = train_df[, label],
+    method = "xgbTree",
+    tuneLength = 2,
+    trControl = train_control,
+    preProcess = pre_process
+)
+```
+
+# Testing
+
+As the last step we need to see how well our models are doing.
+First we need to use the model to create predictions for our test set.
+
+```{r}
+test_df$pred_xgbTree <- predict(model_xgbTree, newdata = test_df)
+```
+
+Lets plot and see how well we do:
+
+```{r}
+test_df %>%
+    ggplot() +
+    geom_point(aes(x = Income, y = pred_xgbTree)) +
+    geom_abline(slope = 1, intercept = 0, color = "red") +
+    geom_abline(slope = cor(test_df$Income, test_df$pred_xgbTree), intercept = 0, color = "blue") +
+    labs(
+        x = "Actual",
+        y = "Predicted",
+        title = paste("Correlation: ", round(cor(test_df$Income, test_df$pred_xgbTree), 3), sep = "")
+    ) +
+    theme_bw()
+```
+
+# Exercise
+
+Use the code from `4-machine_learning.rmd` to train other models on the same
+data. Compare how your models are doing vis-à-vis the `xgbTree` model.
+
+You can find a summary of all models included in the `caret` package
+[here](https://topepo.github.io/caret/available-models.html).
