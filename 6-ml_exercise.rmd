@@ -32,7 +32,15 @@ fdi_df <- read_csv(
 ## Take a look at the data
 
 ```{r}
+slice_head(fdi_df)
+```
+
+```{r}
 glimpse(fdi_df)
+```
+
+```{r}
+summary(fdi_df)
 ```
 
 # Prepare the data
@@ -202,3 +210,5 @@ data. Compare how your models are doing vis-à-vis the `xgbTree` model.
 
 You can find a summary of all models included in the `caret` package
 [here](https://topepo.github.io/caret/available-models.html).
+
+**Binder is limited in terms of resources! Some models might take some time to run.**
