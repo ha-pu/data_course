@@ -33,3 +33,16 @@ The repository is configured with:
   initialize your interactive R environment.
 + **Explore the Lessons:** Once the environment is up, open any of the R
   Markdown files (.rmd) to begin working through the material interactively.
+
+## Running the Code Locally
+
+To run the code locally, you must first install the relevant packages:
+
+```
+install.packages(
+  c(
+    "caret", "caretEnsemble", "gbm", "glmnet", "randomForest", "tidyverse",
+    "xgboost"
+  )
+)
+```
