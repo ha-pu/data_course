@@ -198,6 +198,21 @@ algorithms:
     regression), learning coefficients that minimize the loss function, with
     regularization terms to avoid overfitting.
 
+## Your "NHST" model
+
+```{r}
+model_nhst <- glm(repurchase ~ customer_tier.2 + customer_tier.3 + customer_sex.male, data = train_df, family = binomial)
+```
+
+```{r}
+summary(model_nhst)
+```
+
+```{r}
+pred_train <- predict(model_nhst, type = "response") > 0.5
+accuracy_nhst <- mean(train_df$repurchase == as.integer(pred_train))
+```
+
 ## Training
 
 We use 5-fold cross-validation (CV) for training. CV means that the model is
@@ -237,11 +252,11 @@ model_nnet %>%
 
 ```{r}
 comparison_alg <- data.frame(
-  Model = c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear"),
+  Model = c("glm", "rf", "glmnet", "nnet", "xgbTree", "xgbLinear"),
   Accuracy_base = c(
-    max(model_rf$results$Accuracy), max(model_glmnet$results$Accuracy),
-    max(model_nnet$results$Accuracy), max(model_xgbTree$results$Accuracy),
-    max(model_xgbLinear$results$Accuracy)
+    accuracy_nhst, max(model_rf$results$Accuracy),
+    max(model_glmnet$results$Accuracy), max(model_nnet$results$Accuracy),
+    max(model_xgbTree$results$Accuracy), max(model_xgbLinear$results$Accuracy)
   )
 )
 
@@ -486,28 +501,20 @@ stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
 ## Out-of-Sample Accuracy
 
 ```{r}
-results <- tibble(
-  ensemble_tree = predict(stack_tree, test_df, type = "prob"),
-  ensemble_glm = predict(stack_glm, test_df, type = "prob"),
-  ensemble_gbm = predict(stack_gbm, test_df, type = "prob")
+OOS_ACC <- bind_rows(
+  tibble(
+    Model = c("Stacked Tree", "Stacked GLM", "Stacked GBM"),
+    OOS_ACC = map_dbl(list(stack_tree, stack_glm, stack_gbm), det_OOS_accuracy)
+  ),
+  tibble(
+    Model = c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear"),
+    OOS_ACC = map_dbl(models, det_OOS_accuracy)
+  )
 )
-
-results <- predict(models, test_df) %>%
-  as.data.frame() %>%
-  bind_cols(results)
-
-det_OOS_accuracy_probs <- function(model) {
-  preds <- factor(model >= 0.5, labels = c("X0", "X1"))
-  confusionMatrix(preds, y_test)$overall[[1]]
-}
-
-OOS_ACC <- results %>%
-  summarise(across(everything(), det_OOS_accuracy_probs))
 
 OOS_ACC
 
 OOS_ACC %>%
-  pivot_longer(cols = everything(), names_to = "Model", values_to = "OOS_ACC") %>%
   ggplot() +
   geom_bar(aes(x = Model, y = OOS_ACC), stat = "identity") +
   geom_hline(aes(yintercept = max(OOS_ACC)), linetype = "dashed", color = "darkred") +

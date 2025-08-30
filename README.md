@@ -1,6 +1,6 @@
 # data_course
 
-**AOM 2025 PDW 15383: AI and Big Data Masterclass for International Management**
+**EIBA Summer School 2025: AI in Quantitative Methods in International Business**
 
 This repository contains a collection of interactive R Markdown lessons designed
 to teach data-related topics in an accessible, hands-on way. By using Binder,
@@ -16,9 +16,7 @@ The repository is organized into the following files:
 | **Lesson File**            | **Description**                                                                      |
 |----------------------------|--------------------------------------------------------------------------------------|
 | `4-machine_learning.rmd`   | Introduces essential machine learning concepts and their practical applications.     |
-| `4-machine_learning.ipynb` | Google Colab implementation of rmd file.                                             |
 | `6-ml_exercise.rmd`        | Exerise in machine learning optimization.                                            |
-| `6-ml_exercise.ipynb`      | Google Colab implementation of rmd file.                                             |
 
 The repository is configured with:
 
