@@ -8,4 +8,4 @@ dependencies:
   - r-glmnet
   - r-randomforest
   - r-tidyverse
-  - r-xgboost
+  - r-xgboost=1.7.10.1
