@@ -185,18 +185,16 @@ algorithms:
   * How it works: It uses one hidden layer with a customizable number of
     neurons. The network learns weights for input features through
     backpropagation and gradient descent, optimizing to reduce prediction error.
-* XGBoost with Decision Trees (`method = "xgbTree"`):
-  * What it does: XGBoost is an efficient implementation of gradient boosting
-    using decision trees.
-  * How it works: It builds trees sequentially, where each new tree corrects the
-    errors of the previous ones. It uses gradient descent to minimize a loss
-    function and includes regularization to prevent overfitting.
-* XGBoost with Linear Base Learners (`method = "xgbLinear"`):
-  * What it does: Like `xgbTree`, but uses linear models as base learners
-    instead of trees.
-  * How it works: It applies gradient boosting to linear models (like linear
-    regression), learning coefficients that minimize the loss function, with
-    regularization terms to avoid overfitting.
+* Generalized Additive Model (GAM) (method = "gam"):
+  * What it does: Lets each feature have its own smooth, possibly non-linear
+    effect, then adds them up.
+  * How it works: Fits a smooth curve for each feature and sums them. It
+    automatically controls how "wiggly" the curves are so they do not overfit.
+* k-Nearest Neighbors (KNN) (method = "knn"):
+  * What it does: Predicts based on nearby training points.
+  * How it works: For a new case, find the *k* closest points; classify by
+    majority vote or predict a value by averaging. Be sure to scale features
+    since distance drives everything.
 
 ## Your "NHST" model
 
@@ -246,9 +244,9 @@ model_glmnet <- train(x = train_df[, predictors], y = y_train, method = "glmnet"
 
 model_nnet <- train(x = train_df[, predictors], y = y_train, method = "nnet", trControl = quickTrain)
 
-model_xgbTree <- train(x = train_df[, predictors], y = y_train, method = "xgbTree", trControl = quickTrain)
+model_gam <- train(x = train_df[, predictors], y = y_train, method = "gam", trControl = quickTrain)
 
-model_xgbLinear <- train(x = train_df[, predictors], y = y_train, method = "xgbLinear", trControl = quickTrain)
+model_knn <- train(x = train_df[, predictors], y = y_train, method = "knn", trControl = quickTrain)
 ```
 
 ### Training process
@@ -265,15 +263,21 @@ model_nnet %>%
   theme_bw()
 ```
 
+```{r}
+model_knn %>%
+  ggplot(highlight = TRUE) +
+  theme_bw()
+```
+
 ## Validation
 
 ```{r}
 comparison_alg <- data.frame(
-  Model = c("glm", "rf", "glmnet", "nnet", "xgbTree", "xgbLinear"),
+  Model = c("glm", "rf", "glmnet", "nnet", "gam", "knn"),
   Accuracy_base = c(
     accuracy_nhst_train, max(model_rf$results$Accuracy),
     max(model_glmnet$results$Accuracy), max(model_nnet$results$Accuracy),
-    max(model_xgbTree$results$Accuracy), max(model_xgbLinear$results$Accuracy)
+    max(model_gam$results$Accuracy), max(model_knn$results$Accuracy)
   )
 )
 
@@ -404,8 +408,8 @@ det_OOS_accuracy <- function(model) {
 }
 
 all_model_list <- list(
-  model_rf, model_glmnet, model_nnet, model_xgbTree,
-  model_xgbLinear, model_cv, model_boot, model_grid,
+  model_rf, model_glmnet, model_nnet, model_gam,
+  model_knn, model_cv, model_boot, model_grid,
   model_random, model_adaptive
 )
 
@@ -434,11 +438,11 @@ arrange(comparison_all, desc(OOS_Acc))
 ### Variable importance
 
 ```{r}
-varImp(model_xgbTree)
+varImp(model_gam)
 ```
 
 ```{r}
-plot(varImp(model_xgbTree), main = "xgbTree")
+plot(varImp(model_gam), main = "gam")
 ```
 
 ```{r}
@@ -468,7 +472,7 @@ There are multiple ways to combine models:
 We first define a list of models and apply them to the same folds of our data.
 
 ```{r, warning=FALSE, message=FALSE, include=FALSE}
-algoList <- c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear")
+algoList <- c("rf", "glmnet", "nnet", "gam", "knn")
 
 stack_index <- createFolds(y_train, k = 5) # We want to fix our index for comparison and validity
 
@@ -497,10 +501,10 @@ modelCor(resamples(models))
 
 Next, we use a meta model to combine the predictions of the base models. The
 meta model can be a simple linear regression model or a more complex model like
-an extreme gradient boosting tree (`xgbTree`), a gradient boosting machine
-(`gbm`), or a simple logistic regression (`glm`). GBM is an ensemble learning
-method that builds a strong predictive model by sequentially combining many weak
-models, typically decision trees.
+random forest (`rf`), a gradient boosting machine (`gbm`), or a simple logistic
+regression (`glm`). GBM is an ensemble learning method that builds a strong
+predictive model by sequentially combining many weak models, typically decision
+trees.
 
 ```{r message=FALSE, warning=FALSE}
 stackControl <- trainControl(
@@ -508,7 +512,7 @@ stackControl <- trainControl(
   index = stack_index
 )
 
-stack_tree <- caretStack(models, method = "xgbTree", trControl = stackControl)
+stack_rf <- caretStack(models, method = "rf", trControl = stackControl)
 
 stack_gbm <- caretStack(models, method = "gbm", trControl = stackControl)
 
@@ -518,13 +522,20 @@ stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
 ## Out-of-Sample Accuracy
 
 ```{r}
+det_OOS_accuracy_prob <- function(model) {
+  pred <- predict(model, test_df)
+  pred <- ifelse(pred$X1 > 0.5, "X1", "X0")
+  pred <- factor(pred, levels = c("X0", "X1"))
+  confusionMatrix(pred, y_test)$overall[[1]]
+}
+
 OOS_ACC <- data.frame(
   Model = c(
-    "Stacked Tree", "Stacked GLM", "Stacked GBM", "rf", "glmnet", "nnet",
-    "xgbTree", "xgbLinear", "glm"
+    "Stacked RF", "Stacked GLM", "Stacked GBM", "rf", "glmnet", "nnet",
+    "gam", "knn", "glm"
   ),
   OOS_ACC = c(
-    map_dbl(list(stack_tree, stack_glm, stack_gbm), det_OOS_accuracy),
+    map_dbl(list(stack_rf, stack_glm, stack_gbm), det_OOS_accuracy_prob),
     map_dbl(models, det_OOS_accuracy),
     accuracy_nhst_test
   )
