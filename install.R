@@ -1,9 +1,0 @@
-install.packages(c(
-    "caret",
-    "caretEnsemble",
-    "gbm",
-    "glmnet",
-    "randomForest",
-    "tidyverse",
-    "xgboost"
-))
