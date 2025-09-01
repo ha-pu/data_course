@@ -1,11 +1,11 @@
 channels:
   - conda-forge
 dependencies:
-  - r-base=4.2.1
+  - r-base
   - r-caret
   - r-caretensemble
   - r-gbm
   - r-glmnet
   - r-randomforest
   - r-tidyverse
-  - r-xgboost=1.7.6
+  - r-xgboost
