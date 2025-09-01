@@ -1,7 +1,7 @@
 ---
 title: "Machine Learning"
 author: Harald Puhr
-date: "July 20, 2025"
+date: "September 01, 2025"
 ---
 
 [Data Source](https://github.com/ha-pu/data_files#repurchase-likelihood-dataset)
@@ -154,7 +154,10 @@ train_df[, predictors] <- predict(preproc_par, train_df[, predictors])
 ```
 
 ```{r}
-preprocPar <- preProcess(test_df[, predictors], method = c("center", "scale", "medianImpute"))
+preprocPar <- preProcess(
+  test_df[, predictors],
+  method = c("center", "scale", "medianImpute")
+)
 test_df[, predictors] <- predict(preprocPar, test_df[, predictors])
 ```
 
@@ -199,7 +202,11 @@ algorithms:
 ## Your "NHST" model
 
 ```{r}
-model_nhst <- glm(repurchase ~ customer_tier.2 + customer_tier.3 + customer_sex.male, data = train_df, family = binomial)
+model_nhst <- glm(
+  repurchase ~ customer_tier.2 + customer_tier.3 + customer_sex.male,
+  data = train_df,
+  family = binomial
+)
 ```
 
 ```{r}
@@ -238,15 +245,40 @@ these 5 evaluations to get the final evaluation of the respective training step.
 ```{r, warning=FALSE, message=FALSE, include=FALSE}
 quickTrain <- trainControl(method = "cv", number = 5)
 
-model_rf <- train(x = train_df[, predictors], y = y_train, method = "rf", trControl = quickTrain)
+model_rf <- train(
+  x = train_df[, predictors],
+  y = y_train,
+  method = "rf",
+  trControl = quickTrain
+)
 
-model_glmnet <- train(x = train_df[, predictors], y = y_train, method = "glmnet", trControl = quickTrain)
+model_glmnet <- train(
+  x = train_df[, predictors],
+  y = y_train,
+  method = "glmnet",
+  trControl = quickTrain
+)
 
-model_nnet <- train(x = train_df[, predictors], y = y_train, method = "nnet", trControl = quickTrain)
+model_nnet <- train(
+  x = train_df[, predictors],
+  y = y_train,
+  method = "nnet",
+  trControl = quickTrain
+)
 
-model_gam <- train(x = train_df[, predictors], y = y_train, method = "gam", trControl = quickTrain)
+model_gam <- train(
+  x = train_df[, predictors],
+  y = y_train,
+  method = "gam",
+  trControl = quickTrain
+)
 
-model_knn <- train(x = train_df[, predictors], y = y_train, method = "knn", trControl = quickTrain)
+model_knn <- train(
+  x = train_df[, predictors],
+  y = y_train,
+  method = "knn",
+  trControl = quickTrain
+)
 ```
 
 ### Training process
@@ -284,7 +316,10 @@ comparison_alg <- data.frame(
 comparison_alg %>%
   ggplot() +
   geom_bar(aes(x = Model, y = Accuracy_base), stat = "identity") +
-  geom_hline(aes(yintercept = max(Accuracy_base)), linetype = "dashed", color = "darkred") +
+  geom_hline(
+    aes(yintercept = max(Accuracy_base)),
+    linetype = "dashed", color = "darkred"
+  ) +
   scale_y_continuous(limits = c(0.0, 0.9)) +
   theme_bw()
 
@@ -308,8 +343,18 @@ crossValidation <- trainControl(method = "cv", number = 10)
 bootstraping <- trainControl(method = "boot")
 
 # Apply both methods to a random forest model
-model_cv <- train(x = train_df[, predictors], y = y_train, method = "rf", trControl = crossValidation)
-model_boot <- train(x = train_df[, predictors], y = y_train, method = "rf", trControl = bootstraping)
+model_cv <- train(
+  x = train_df[, predictors],
+  y = y_train,
+  method = "rf",
+  trControl = crossValidation
+)
+model_boot <- train(
+  x = train_df[, predictors],
+  y = y_train,
+  method = "rf",
+  trControl = bootstraping
+)
 ```
 
 ```{r}
@@ -324,7 +369,10 @@ comparison_val <- data.frame(
 comparison_val %>%
   ggplot() +
   geom_bar(aes(x = Model, y = Accuracy_base), stat = "identity") +
-  geom_hline(aes(yintercept = max(Accuracy_base)), linetype = "dashed", color = "darkred") +
+  geom_hline(
+    aes(yintercept = max(Accuracy_base)),
+    linetype = "dashed", color = "darkred"
+  ) +
   scale_y_continuous(limits = c(0.0, 0.9)) +
   theme_bw()
 
@@ -365,16 +413,25 @@ adaptiveTune <- trainControl(
 
 # Apply all three methods to a glmnet model
 model_grid <- train(
-  x = train_df[, predictors], y = y_train, method = "glmnet",
-  trControl = gridTune, tuneLength = 5
+  x = train_df[, predictors],
+  y = y_train,
+  method = "glmnet",
+  trControl = gridTune,
+  tuneLength = 5
 )
 model_random <- train(
-  x = train_df[, predictors], y = y_train, method = "glmnet",
-  trControl = randomTune, tuneLength = 25
+  x = train_df[, predictors],
+  y = y_train,
+  method = "glmnet",
+  trControl = randomTune,
+  tuneLength = 25
 )
 model_adaptive <- train(
-  x = train_df[, predictors], y = y_train, method = "glmnet",
-  trControl = adaptiveTune, tuneLength = 25
+  x = train_df[, predictors],
+  y = y_train,
+  method = "glmnet",
+  trControl = adaptiveTune,
+  tuneLength = 25
 )
 ```
 
@@ -390,7 +447,10 @@ comparison_tune <- data.frame(
 comparison_tune %>%
   ggplot() +
   geom_bar(aes(x = Model, y = Accuracy_base), stat = "identity") +
-  geom_hline(aes(yintercept = max(Accuracy_base)), linetype = "dashed", color = "darkred") +
+  geom_hline(
+    aes(yintercept = max(Accuracy_base)),
+    linetype = "dashed", color = "darkred"
+  ) +
   scale_y_continuous(limits = c(0.0, 0.9)) +
   theme_bw()
 
@@ -400,7 +460,11 @@ comparison_tune
 ## Testing
 
 ```{r}
-comparison_all <- bind_rows(comparison_alg, comparison_val, comparison_tune) %>%
+comparison_all <- bind_rows(
+  comparison_alg,
+  comparison_val,
+  comparison_tune
+) %>%
   filter(Model != "cv5")
 
 det_OOS_accuracy <- function(model) {
@@ -427,8 +491,14 @@ comparison_all %>%
   ggplot() +
   geom_line(aes(x = Model, y = Accuracy, color = Base, group = Base)) +
   geom_point(aes(x = Model, y = Accuracy, color = Base)) +
-  geom_hline(aes(yintercept = max(comparison_all$Accuracy_base)), colour = "darkred", linetype = "dashed") +
-  geom_hline(aes(yintercept = max(comparison_all$OOS_Acc)), colour = "darkblue", linetype = "dashed") +
+  geom_hline(
+    aes(yintercept = max(comparison_all$Accuracy_base)),
+    colour = "darkred", linetype = "dashed"
+  ) +
+  geom_hline(
+    aes(yintercept = max(comparison_all$OOS_Acc)),
+    colour = "darkblue", linetype = "dashed"
+  ) +
   scale_y_continuous(limits = c(0.0, 0.9)) +
   theme_bw()
 
@@ -508,7 +578,10 @@ trees.
 
 ```{r message=FALSE, warning=FALSE}
 stackControl <- trainControl(
-  method = "repeatedcv", number = 10, repeats = 3, classProbs = TRUE,
+  method = "repeatedcv",
+  number = 10,
+  repeats = 3,
+  classProbs = TRUE,
   index = stack_index
 )
 
@@ -546,10 +619,11 @@ OOS_ACC
 OOS_ACC %>%
   ggplot() +
   geom_bar(aes(x = Model, y = OOS_ACC), stat = "identity") +
-  geom_hline(aes(yintercept = max(OOS_ACC)), linetype = "dashed", color = "darkred") +
-  labs(
-    x = NULL
+  geom_hline(
+    aes(yintercept = max(OOS_ACC)),
+    linetype = "dashed", color = "darkred"
   ) +
+  labs(x = NULL) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
