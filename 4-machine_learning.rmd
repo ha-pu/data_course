@@ -208,9 +208,26 @@ model_nhst <- glm(repurchase ~ customer_tier.2 + customer_tier.3 + customer_sex.
 summary(model_nhst)
 ```
 
+### In-sample accuracy of your "NHST" model
+
 ```{r}
 pred_train <- predict(model_nhst, type = "response") > 0.5
-accuracy_nhst <- mean(train_df$repurchase == as.integer(pred_train))
+accuracy_nhst_train <- mean(train_df$repurchase == as.integer(pred_train))
+```
+
+```{r}
+confusionMatrix(as.factor(as.integer(pred_train)), train_df$repurchase)
+```
+
+### Out-of-sample accuracy of your "NHST" model
+
+```{r}
+pred_test <- predict(model_nhst, newdata = test_df, type = "response") > 0.5
+accuracy_nhst_test <- mean(test_df$repurchase == as.integer(pred_test))
+```
+
+```{r}
+confusionMatrix(as.factor(as.integer(pred_test)), test_df$repurchase)
 ```
 
 ## Training
@@ -254,7 +271,7 @@ model_nnet %>%
 comparison_alg <- data.frame(
   Model = c("glm", "rf", "glmnet", "nnet", "xgbTree", "xgbLinear"),
   Accuracy_base = c(
-    accuracy_nhst, max(model_rf$results$Accuracy),
+    accuracy_nhst_train, max(model_rf$results$Accuracy),
     max(model_glmnet$results$Accuracy), max(model_nnet$results$Accuracy),
     max(model_xgbTree$results$Accuracy), max(model_xgbLinear$results$Accuracy)
   )
@@ -394,7 +411,7 @@ all_model_list <- list(
 
 comparison_all <- mutate(
   comparison_all,
-  OOS_Acc = map_dbl(all_model_list, det_OOS_accuracy)
+  OOS_Acc = c(accuracy_nhst_test, map_dbl(all_model_list, det_OOS_accuracy))
 )
 
 comparison_all %>%
@@ -501,14 +518,15 @@ stack_glm <- caretStack(models, method = "glm", trControl = stackControl)
 ## Out-of-Sample Accuracy
 
 ```{r}
-OOS_ACC <- bind_rows(
-  tibble(
-    Model = c("Stacked Tree", "Stacked GLM", "Stacked GBM"),
-    OOS_ACC = map_dbl(list(stack_tree, stack_glm, stack_gbm), det_OOS_accuracy)
+OOS_ACC <- data.frame(
+  Model = c(
+    "Stacked Tree", "Stacked GLM", "Stacked GBM", "rf", "glmnet", "nnet",
+    "xgbTree", "xgbLinear", "glm"
   ),
-  tibble(
-    Model = c("rf", "glmnet", "nnet", "xgbTree", "xgbLinear"),
-    OOS_ACC = map_dbl(models, det_OOS_accuracy)
+  OOS_ACC = c(
+    map_dbl(list(stack_tree, stack_glm, stack_gbm), det_OOS_accuracy),
+    map_dbl(models, det_OOS_accuracy),
+    accuracy_nhst_test
   )
 )
 
