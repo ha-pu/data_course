@@ -20,7 +20,7 @@ The repository is organized into the following files:
 
 The repository is configured with:
 
-+ **`install.R`**: Lists the necessary dependencies to set up the learning
++ **`environment.yml`**: Lists the necessary dependencies to set up the learning
   environment.
 + **`runtime.txt`**: Specifies the runtime version, ensuring the container runs
   with the correct configuration.

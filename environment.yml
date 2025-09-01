@@ -1,0 +1,12 @@
+channels:
+  - conda-forge
+
+
+dependencies:
+  - r-base
+  - r-caret
+  - r-caretensemble
+  - r-gbm
+  - r-glmnet
+  - r-randomforest
+  - r-tidyverse
