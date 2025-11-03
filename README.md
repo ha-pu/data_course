@@ -7,7 +7,7 @@ designed to teach data-related topics in an accessible, hands-on way. By using
 Binder, educators and learners can easily launch a pre-built, containerized
 environment (including Jupyter) right from the browser.
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ha-pu/data_course/HEAD?urlpath=rstudio)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ha-pu/data_course/BDA25?urlpath=%2Fdoc%2Ftree%2Findex.ipynb)
 
 ## Contents
 
