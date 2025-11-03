@@ -1,9 +1,9 @@
 name: venv
 channels:
+  - defaults
   - conda-forge
 dependencies:
   - python=3.14
-  - chatlas
   - matplotlib
   - numpy
   - pandas
@@ -11,3 +11,5 @@ dependencies:
   - scikit-learn
   - scipy
   - statsmodels
+  - pip
+    - chatlas
