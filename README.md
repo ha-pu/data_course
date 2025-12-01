@@ -20,7 +20,7 @@ The repository is organized into the following files:
 | `3-regressions.ipynb`      | A comprehensive dive into regression analysis, including multiple regression models. |
 | `4-machine_learning.ipynb` | Introduces essential machine learning concepts and their practical applications.     |
 | `5-llms.ipynb`             | An exploration of Large Language Models (LLMs) with current insights and examples.   |
-| `6-agents.ipynb`           | A simple example of interactions between AI agents.                                  |
+| `6-ai_agents.ipynb`         | A simple example of interactions between AI agents.                                  |
 
 The repository is configured with:
 
